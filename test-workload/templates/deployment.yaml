@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: test-workload
+  name: test-workload
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: test-workload
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: test-workload
+    spec:
+      nodeSelector:
+        workload/reverse-proxy: "true"
+      containers:
+      - image: docker.io/busybox
+        workingDir: /tmp
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Hello, world!" > index.html
+            exec /bin/httpd -f -p 8080
+        imagePullPolicy: Always
+        name: test-workload
+        resources:
+          limits:
+            cpu: 250m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        securityContext:
+          runAsUser: 33
+          runAsGroup: 33
+          allowPrivilegeEscalation: False
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: True
+          seccompProfile:
+            type: RuntimeDefault
+        ports:
+          - containerPort: 8080
+            name: http
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: test-workload
+status: {}
