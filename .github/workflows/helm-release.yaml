@@ -18,8 +18,9 @@ jobs:
 
       - name: Package chart
         run: |
+          cd test-workload
           helm dependency update || true
-          helm package test-workload --testination dist
+          helm package . --destination dist
 
       - name: Checkout gh-pages
         uses: actions/checkout@v4
